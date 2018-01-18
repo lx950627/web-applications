@@ -11,32 +11,36 @@ public class ComputeSHA {
      */
     public static void main (String[] args)
     {
-        File file=new File(args[0]);
-        FileInputStream finput=null;
-        byte data[]=new byte[(int)file.length()];
         try {
-            finput=new FileInputStream(file);
-            finput.read(data);  
-            finput.close();  
-        } catch (IOException ex) {
-            System.out.println("Error Reading File");   
-        }
-        
-        MessageDigest md;
-        try {
+            File file=new File(args[0]);
+            FileInputStream finput=new FileInputStream(file);
+            byte data[]=new byte[1024];
+            MessageDigest md;
             md=MessageDigest.getInstance("SHA-1");
-            md.update(data);
+            int len=0;
+            while((len=finput.read(data))!=-1)
+            {
+                md.update(data,0,len);
+                //System.out.print("read"+len+"bytes\n");
+            }
+            
+            finput.close();
             byte[] messageSha1=md.digest();
             StringBuffer message=new StringBuffer();
             for(byte bytes:messageSha1)
             {
-               message.append(String.format("%02x", bytes & 0xff));
+                message.append(String.format("%02x",bytes & 0xff));
             }
-            //System.out.println(data.toString());
+            
             System.out.println(message.toString());
-        } catch (NoSuchAlgorithmException ex) {
+        }
+        catch (IOException e)
+        {
+            System.out.println("Error Reading File");
+        }
+        catch (NoSuchAlgorithmException e)
+        {
             System.out.println("No Such Algorithm");
         }
-          System.out.println();
     }
 }
