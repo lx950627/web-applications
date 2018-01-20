@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # create tables in MySQL
-mysql CS144 < create.sql
+# mysql CS144 < create.sql
 
 # compile java servlet codes and assemble files into build/libs/editor.war
 gradle assemble

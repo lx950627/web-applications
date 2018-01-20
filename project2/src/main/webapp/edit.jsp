@@ -5,21 +5,27 @@
     <title>Edit Post</title>
 </head>
 <body>
+<%
+    int pid=Integer.parseInt(request.getParameter("postid"));
+    String username=request.getParameter("username");
+%>
     <div><h1>Edit Post</h1></div>
-    <form>
+    <form action="post" method="POST">
         <div>
-            <button type="submit">Save</button>
-            <button type="submit">Close</button>
-            <button type="submit">Preview</button>
-            <button type="submit">Delete</button>
+            <button type="submit" name="action" value="save">Save</button>
+            <button type="submit" name="action" value="list">Close</button>
+            <button type="submit" name="action" value="preview">Preview</button>
+            <button type="submit" name="action" value="delete">Delete</button>
         </div>
+        <input type="hidden" name="username" value="<%= username %>">
+        <input type="hidden" name="postid" value="<%= pid %>">
         <div>
             <label for="title">Title</label>
-            <input type="text" id="text">
+            <input name="title" type="text" id="title" value='<%= request.getAttribute("title") %>'>
         </div>
         <div>
             <label for="body">Body</label>
-            <textarea style="height: 20rem;" id="body"></textarea>
+            <textarea name="body" style="height: 20rem;" id="body"><%= request.getAttribute("body") %></textarea>
         </div>
     </form>
 </body>
