@@ -61,6 +61,7 @@ public class Editor extends HttpServlet {
         if(action==null)
         {
            request.setAttribute("code",2);
+           response.setStatus(400);
            request.getRequestDispatcher("/invalid.jsp").forward(request, response);
            return;
         }
@@ -68,6 +69,7 @@ public class Editor extends HttpServlet {
         else if(action.equals("save") || action.equals("delete"))
         {
           request.setAttribute("code",1);
+          response.setStatus(405);
           request.getRequestDispatcher("/invalid.jsp").forward(request, response);
         }
 
@@ -88,6 +90,7 @@ public class Editor extends HttpServlet {
 
         else{
            request.setAttribute("code",2);
+           response.setStatus(400);
            request.getRequestDispatcher("/invalid.jsp").forward(request, response);
         }
         
@@ -108,6 +111,7 @@ public class Editor extends HttpServlet {
         if(action==null)
         {
            request.setAttribute("code",2);
+           response.setStatus(400);
            request.getRequestDispatcher("/invalid.jsp").forward(request, response);
            return;
         }
@@ -125,8 +129,16 @@ public class Editor extends HttpServlet {
              int pid=Integer.parseInt(pidstring);
              String title=request.getParameter("title");
              String body=request.getParameter("body");
-
-            if(pid<=0)//assign a new postid and save as a new post
+  
+             if(title==null || body==null || title.equals("") || body.equals(""))
+             {
+              request.setAttribute("code",6);
+              response.setStatus(400);
+              request.getRequestDispatcher("/invalid.jsp").forward(request, response);
+              return;
+             }
+    
+             if(pid<=0)//assign a new postid and save as a new post
             {
                conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
                PreparedStatement preparedStmt = conn.prepareStatement("SELECT MAX(postid) FROM Posts WHERE username=?"); 
@@ -233,6 +245,7 @@ public class Editor extends HttpServlet {
 
         else{
             request.setAttribute("code",2);
+            response.setStatus(400);
             request.getRequestDispatcher("/invalid.jsp").forward(request, response);
         }   
     }
@@ -297,6 +310,7 @@ public class Editor extends HttpServlet {
           String tmarkdown = request.getParameter("title");
           if(bmarkdown==null || tmarkdown==null){
               request.setAttribute("code",6);
+              response.setStatus(400);
               request.getRequestDispatcher("/invalid.jsp").forward(request, response);
           }
 
@@ -312,10 +326,12 @@ public class Editor extends HttpServlet {
         throws ServletException, IOException 
         {
             String username=request.getParameter("username");
-            String pidstring=request.getParameter("postid");
-            if(!CheckNameAndPID(request,response,username,pidstring))
+            if(username==null)
             {
-              return ;
+              request.setAttribute("code",4);
+              response.setStatus(400);
+              request.getRequestDispatcher("/invalid.jsp").forward(request, response);
+              return;
             }
             request.getRequestDispatcher("/list.jsp").forward(request, response);
         }
@@ -326,12 +342,14 @@ public class Editor extends HttpServlet {
             if(username==null)
             {
               request.setAttribute("code",4);
+              response.setStatus(400);
               request.getRequestDispatcher("/invalid.jsp").forward(request, response);
               return false;
             }
             if(pidstring==null)
             {
               request.setAttribute("code",5);
+              response.setStatus(400);
               request.getRequestDispatcher("/invalid.jsp").forward(request, response);
               return false;
             }
@@ -339,6 +357,7 @@ public class Editor extends HttpServlet {
             if(!pidstring.matches("-*[0-9]+"))
             {
               request.setAttribute("code",3);
+              response.setStatus(400);
               request.getRequestDispatcher("/invalid.jsp").forward(request, response);
               return false;
             }

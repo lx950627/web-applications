@@ -27,6 +27,9 @@
    else if(code==5){
       reason="Post id is required for this action.";
    }
+   else if(code==6){
+      reason="The title and body of your post can not be empty.";
+   }
    else{
       reason="Something is missing...";
    }
