@@ -52,10 +52,10 @@
              </tr>
          </thead>
          
-         <c:forEach var = "row" items = "${result.rows}" varStatus="loop">
+         <c:forEach var = "row" items = "${listdata}" varStatus="loop">
             <tr>
                <form id="<c:out value="${loop.index}"/>" action="post" method="POST">
-                 <input type="hidden" name="username" value="${row.username}">
+                 <input type="hidden" name="username" value="${username}">
                  <input type="hidden" name="postid" value="${row.postid}">
                  <td><c:out value = "${row.title}"/></td>
                  <td><c:out value = "${row.created}"/></td>

@@ -92,10 +92,8 @@ public class Editor extends HttpServlet {
            request.setAttribute("code",2);
            response.setStatus(400);
            request.getRequestDispatcher("/invalid.jsp").forward(request, response);
-        }
-        
+        }     
     }
-    
     /**
      * Handles HTTP POST requests
      * 
@@ -119,17 +117,16 @@ public class Editor extends HttpServlet {
         else if(action.equals("save"))
         {
             Connection conn = null;
-        try {
-             String username=request.getParameter("username");
-             String pidstring=request.getParameter("postid");
-             if(!CheckNameAndPID(request,response,username,pidstring))
+            String username=request.getParameter("username");
+            String pidstring=request.getParameter("postid");
+            if(!CheckNameAndPID(request,response,username,pidstring))
              {
               return ;
              }
              int pid=Integer.parseInt(pidstring);
              String title=request.getParameter("title");
              String body=request.getParameter("body");
-  
+        try {
              if(title==null || body==null || title.equals("") || body.equals(""))
              {
               request.setAttribute("code",6);
@@ -162,9 +159,8 @@ public class Editor extends HttpServlet {
                preparedStmt.setString(4,body);
                preparedStmt.setString(5,timeStamp);
                preparedStmt.setString(6,timeStamp);
-               int n = preparedStmt.executeUpdate();
+               preparedStmt.executeUpdate();
                //System.out.println(n);
-
             } 
             else if(pid>0)
             {
@@ -184,8 +180,7 @@ public class Editor extends HttpServlet {
                    preparedStmt.setString(3,timeStamp);
                    preparedStmt.setString(4,username);
                    preparedStmt.setInt(5,pid);
-                   int n = preparedStmt.executeUpdate();
-
+                   preparedStmt.executeUpdate();
                }
             }
             }
@@ -197,7 +192,7 @@ public class Editor extends HttpServlet {
             try { conn.close(); } catch (Exception e) { /* ignored */ }
             }
             
-
+            request.setAttribute("listdata",RetrieveListData(username));
             request.getRequestDispatcher("/list.jsp").forward(request, response);
 
         }
@@ -217,13 +212,14 @@ public class Editor extends HttpServlet {
               PreparedStatement preparedStmt = conn.prepareStatement("DELETE FROM Posts WHERE username=? AND postid=?");
               preparedStmt.setString(1,username);
               preparedStmt.setInt(2,pid);
-              int n = preparedStmt.executeUpdate();
+              preparedStmt.executeUpdate();
 
             }catch (SQLException ex){
             System.out.println("SQLException caught");
             } finally {
             try { conn.close(); } catch (Exception e) { /* ignored */ }
             }
+            request.setAttribute("listdata",RetrieveListData(username));
             request.getRequestDispatcher("/list.jsp").forward(request, response);
                  
         }
@@ -333,6 +329,7 @@ public class Editor extends HttpServlet {
               request.getRequestDispatcher("/invalid.jsp").forward(request, response);
               return;
             }
+            request.setAttribute("listdata",RetrieveListData(username));
             request.getRequestDispatcher("/list.jsp").forward(request, response);
         }
 
@@ -367,6 +364,27 @@ public class Editor extends HttpServlet {
            
             return true;
        }
+
+    private ArrayList<PostData> RetrieveListData(String username) 
+    {
+           Connection conn=null;
+           ArrayList<PostData> listdata=new ArrayList();
+           try{
+              conn = DriverManager.getConnection("jdbc:mysql://localhost:3306/CS144", "cs144", "");
+              PreparedStatement preparedStmt = conn.prepareStatement("SELECT postid,title,created,modified FROM Posts WHERE username=?");
+              preparedStmt.setString(1,username);
+              ResultSet rs = preparedStmt.executeQuery(); 
+              while(rs.next())
+              {
+                listdata.add(new PostData(rs.getInt(1),rs.getString(2),rs.getString(3),rs.getString(4)));
+              }
+          }catch(Exception e){
+            System.out.println(e);
+          }finally {
+            try { conn.close(); } catch (Exception e) { /* ignored */ }
+          }
+          return listdata;
+    }
 
 }
 
