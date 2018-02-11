@@ -1,0 +1,8 @@
+<button type="submit" (click)="addPost()">New Post!</button>
+<li *ngFor="let post of posts">
+   <a routerLink="/edit/{{post.postid}}">
+    <span class="badge">{{post.created}}</span>
+    <div>{{post.title}}</div>
+   </a>
+</li>
+

@@ -1,0 +1,21 @@
+<div *ngIf="post">
+<h3>Title:</h3>
+<form #myForm="ngForm">
+<input [(ngModel)]="post.title" type="text" name="title">
+<br>
+<h3>Body:</h3>
+<textarea class="form-control" [(ngModel)]="post.body" cols=50 rows=10 placeholder="Please input your post here." name="body">
+</textarea>
+<div>
+Last Modified:{{post.modified}}
+</div>
+<button type="button" (click)="delete()">Delete</button>
+<button type="button" (click)="save(myForm)" [disabled]="!myForm.dirty">Save</button>
+<button type="button" (click)="preview()">Preview</button>
+</form>
+</div>
+
+
+
+
+
