@@ -1,3 +1,5 @@
+<div class="rightside" *ngIf="post">
 <button type="button" routerLink="/edit/{{post.postid}}">Edit</button>
 <div [innerHTML]="title"></div>
 <div [innerHTML]="body"></div>
+</div>

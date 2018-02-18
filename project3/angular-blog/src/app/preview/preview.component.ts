@@ -19,7 +19,7 @@ export class PreviewComponent implements OnInit {
   	          private route:Router) { }
 
   ngOnInit() {
-  	this.activatedRoute.params.subscribe(() => {this.displayContent();});
+  	this.activatedRoute.params.subscribe(() => this.displayContent());
   	}
   
 
@@ -27,11 +27,14 @@ export class PreviewComponent implements OnInit {
   	  const id = +this.activatedRoute.snapshot.paramMap.get('id');
   	  this.post=this.blogService.getPost(id);
   	 // console.log(this.post);
-      
-  	  let reader=new Parser();
-  	  let writer=new HtmlRenderer();
-  	  this.body=writer.render(reader.parse(this.post.body));
-  	  this.title=writer.render(reader.parse(this.post.title));
+      if(this.post)
+      {
+       let reader=new Parser();
+       let writer=new HtmlRenderer();
+       this.body=writer.render(reader.parse(this.post.body));
+       this.title=writer.render(reader.parse(this.post.title));
+      }
+  	  
   }
 
 

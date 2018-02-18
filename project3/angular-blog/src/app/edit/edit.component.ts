@@ -1,16 +1,16 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy} from '@angular/core';
 import { Post, BlogService } from '../blog.service';
 import { FormsModule,NgForm} from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
-
+import { HostListener } from '@angular/core';
 @Component({
   selector: 'app-edit',
   templateUrl: './edit.component.html',
   styleUrls: ['./edit.component.css']
 })
-export class EditComponent implements OnInit {
+export class EditComponent implements OnInit{
   post:Post;
   constructor(private blogService:BlogService,
   	          private activatedRoute: ActivatedRoute,
@@ -24,6 +24,11 @@ export class EditComponent implements OnInit {
   	  this.get();
   	  });
   }
+
+  @HostListener('window:unload')
+    unloadHandler(event) {
+      if(this.post) {this.blogService.updatePost(this.post);}
+   }
 
   get():void{
   	const id = +this.activatedRoute.snapshot.paramMap.get('id');

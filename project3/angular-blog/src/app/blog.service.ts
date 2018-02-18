@@ -38,14 +38,11 @@ export class BlogService {
   newPost(): Post{
   	 let id=this.maxid;
   	 this.maxid++;
-  	 let post={'postid':id,'body':"this is body",'title':"this is title "+id.toString(),
+  	 let post={'postid':id,'body':"",'title':"",
   	 'created':new Date(),'modified':new Date()};
-  	 let postsaved={'postid':id,'body':"this is body",'title':"this is title "+id.toString(),
-  	 'created':new Date().toLocaleString(),'modified':new Date().toLocaleString()};
-  	 localStorage.setItem(id.toString(),JSON.stringify(postsaved));
+  	 localStorage.setItem(id.toString(),JSON.stringify(post));
   	 localStorage.setItem("maxid",this.maxid.toString());
-  	 let postretrived=localStorage.getItem(id.toString());
-  	 this.posts.push(JSON.parse(postretrived));
+  	 this.posts.push(post);
   	 return post;
   }
 
@@ -63,13 +60,14 @@ export class BlogService {
   updatePost(post:Post):void{
   	  for (var i=0 ; i<this.posts.length; i++) 
   	  { 
-         if(this.posts[i].postid == post.postid)
+          if(this.posts[i].postid == post.postid)
   	  	{
-           let spost=JSON.stringify(post);
-           let p=JSON.parse(spost);
-           p.modified=new Date().toLocaleString();
-           //console.log(post);
-           localStorage[post.postid.toString()]=JSON.stringify(p);
+  	  	   let lastpost=JSON.parse(localStorage[post.postid.toString()]);
+           if(lastpost.body!=post.body || lastpost.title!=post.title)
+           {
+           	   post.modified=new Date();
+           }
+           localStorage[post.postid.toString()]=JSON.stringify(post);
            this.posts.splice(i,1,post);
            break;
   	  	}
