@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title><%= posts[0].username %>'s posts</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+<style type="text/css">
+.post{
+  border-style: solid;
+  border-width: 1px;
+}
+</style>
+</head>
+
+  <body>
+  <h4>Username:&nbsp <%= posts[0].username %></h4>
+  <% if(next){ %>
+  <a href="/blog/<%- posts[0].username %>?start=<%- start %>">Next</a>
+  <% } %>
+  <ul>
+    <% posts.forEach((post)=> { %>
+      <div class="post">
+        <h4>Post ID:&nbsp<%= post.postid %></h4>
+        Title:<%- post.title %>
+        Body:<%- post.body %>
+      </div>
+      <br>
+    <% }); %>
+  </ul>
+  </body>
+</html>
