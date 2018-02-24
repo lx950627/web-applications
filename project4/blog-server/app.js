@@ -8,6 +8,7 @@ var logger = require('morgan');
 var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var commonmark =require('commonmark');
+var bcrypt = require('bcrypt');
 // view engine setup
 
 app.set('views', path.join(__dirname, 'views'));
@@ -168,28 +169,22 @@ app.post('/api/:username/:postid',(req,res)=>{
       newpost['created']=new Date().getTime();
       newpost['modified']=new Date().getTime();
 
-      let query={'username':req.params.username,'postid':+req.params.postid};
-      findPosts(db,query,(docs)=>{
-      if(docs.length>0)
-      {
-        res.status(400);
-      }
-      else
-      {
-          createPost(db,newpost,(r)=>{
-           if(r.insertedCount==1){
+      createPost(db,newpost,(r)=>{
+           if(!r){
+              console.log("Duplicate!");
+              res.status(400);
+           }
+           else if(r.insertedCount==1){
             console.log("insert succeeds!");
             res.status(201);
            }
             else if(r.insertedCount==0){
-          console.log("insert fails!");
+            console.log("insert fails!");
             res.status(400);
           }
-        })
-      }
-      res.end();
-       
-      })    
+           res.end();
+        });
+        
 });
 
 app.put('/api/:username/:postid',(req,res)=>{
@@ -214,7 +209,7 @@ app.put('/api/:username/:postid',(req,res)=>{
             res.status(400);
            }
            res.end();
-      })
+      });
       
 });
 
@@ -242,10 +237,45 @@ app.delete('/api/:username/:postid',(req,res)=>{
       
 });
 
+app.get('/login?',(req,res)=>{
+      if(!req.query || !req.query.username || !req.query.password){
+        res.render('login',{'re':req.query.redirect});
+        res.end();
+        return ;
+      }
+      retrievePassword(db,req.query.username,(docs)=>{
+           console.log(docs);
+           if(!docs || !docs.length)
+           {
+             res.render('bad');
+             res.end();
+             return;
+           }
+           
+           bcrypt.compare(req.query.password,docs[0].password).then(match=>{
+                 let redirect=req.query.redirect;
+                  if(!redirect)
+                  {
+                       redirect="/";
+                  }
+
+                 if(match){
+                   res.redirect(redirect);
+                   //res.redirect("http://google.com");
+                 }
+                 else{
+                    res.render('login',{'re':redirect});
+                    res.end();
+                    return ;
+                 }           
+           });
+      });   
+});
+
 
 const createPost = function(db,post,callback){
       db.collection("Posts").insertOne(post,(err,r)=>{
-           assert.equal(null,err);
+           //console.log(err);
            callback(r);
       })
 }
@@ -271,7 +301,7 @@ const deletePost = function(db,query,callback){
 const findPosts = function(db,query,callback) {
   // Get the documents collection
    //console.log(query);
-   let projecter={"title":1,"body":1,"created":1,"modified":1,"_id":0};
+   let projecter={"postid":1,"title":1,"body":1,"created":1,"modified":1,"_id":0};
    
    db.collection("Posts").find(query).project(projecter).sort([['postid',1]]).toArray((err,docs)=>{
       assert.equal(err,null);
@@ -293,11 +323,22 @@ const displayPosts = function(db,username,start,callback){
           callback(p,docs);
      });
         
-     });
- 
-     
+     });  
 };
 
+const retrievePassword =function(db,username,callback){
+     let query={'username':username};
+     let projecter={"password":1,"_id":0};
+     db.collection("Users").find(query).project(projecter).toArray((err,docs)=>{
+          assert.equal(err,null);
+          callback(docs);
+     })
+};
+
+app.use(function(req, res) {
+    res.render("invalid");
+    res.end();
+});
 
 // catch 404 and forward to error handler
 app.use(function(req, res, next) {

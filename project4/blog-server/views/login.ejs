@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Login Page</title>
+    <link rel='stylesheet' href='/stylesheets/style.css' />
+  </head>
+  <body>
+  	 <h1>Please Login in</h1>
+  	 <form>
+     <div>Username:<input type="text" name="username"></div>
+     <div>Password:<input type="password" name="password"></div>
+     <% if(re){ %>
+     <input type="hidden" name="redirect" value=<%- re %>></div>
+     <% } %>
+     <button type="submit">Submit</button>
+     </form>
+  </body>
+</html>
