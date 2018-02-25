@@ -9,6 +9,7 @@ var cookieParser = require('cookie-parser');
 var bodyParser = require('body-parser');
 var commonmark =require('commonmark');
 var bcrypt = require('bcrypt');
+var jwt = require('jsonwebtoken');
 // view engine setup
 
 app.set('views', path.join(__dirname, 'views'));
@@ -34,6 +35,40 @@ MongoClient.connect(url,(err,client)=>{
        db=client.db(dbName);
       //client.close();
 });
+
+function auth(req,res,next){
+    if(!req.cookies['jwt'])
+    {
+       res.render('unauth');
+       res.status(401);
+       res.end();
+       return;
+    }
+    if(!req.params.username){
+       res.render('bad');
+       res.status(400);
+       res.end();
+       return;
+    }
+    let secret='C-UFRaksvPKhx1txJYFcut3QGxsafPmwCY6SCly3G6c';
+    jwt.verify(req.cookies['jwt'],secret,(err,decoded)=>{
+        if(err || decoded.usr!=req.params.username){
+          console.log(err);
+          res.render('unauth');
+          res.status(401);
+          res.end();
+        }
+        else{
+          console.log(decoded);
+          next();
+        }
+        
+    })
+   
+}
+
+//app.use(auth);
+
 
 app.get('/blog/:username/:postid',(req,res)=>{
 
@@ -84,7 +119,7 @@ app.get('/blog/:username?',(req,res)=>{
 
      displayPosts(db,req.params.username,start,(hasNext,posts)=>{
          console.log(hasNext);
-         console.log(posts);
+         //console.log(posts);
          if(!posts || !posts.length){
             res.send("Sorry, no matched post is found, or the user does not have any posts.");
             res.end();
@@ -108,9 +143,10 @@ app.get('/blog/:username?',(req,res)=>{
 });
 
 
-app.get('/api/:username',(req,res)=>{
+app.get('/api/:username',auth,(req,res)=>{
   let username=req.params.username;
   if(!username){
+    res.render('bad');
     res.status(400);
     res.end();
   }
@@ -124,12 +160,13 @@ app.get('/api/:username',(req,res)=>{
    })
 });
 
-app.get('/api/:username/:postid',(req,res)=>{
+app.get('/api/:username/:postid',auth,(req,res)=>{
   let username=req.params.username;
   let id=req.params.postid;
   //let re=new RegExp()
   if(!id.match(/[0-9]+/) || !username)
   {
+      res.render('bad');
       res.status(400);
       res.end();
       return;
@@ -139,6 +176,7 @@ app.get('/api/:username/:postid',(req,res)=>{
    findPosts(db,query,(docs)=>{
       if(docs.length==0)
       {
+        res.render('oneposterror',{'query':query});
         res.status(404);
       }
       else
@@ -152,7 +190,7 @@ app.get('/api/:username/:postid',(req,res)=>{
 });
 
 
-app.post('/api/:username/:postid',(req,res)=>{
+app.post('/api/:username/:postid',auth,(req,res)=>{
      
      if(!req.params.postid.match(/[0-9]+/) || !req.params.username || !req.body.title 
       || !req.body.body)
@@ -187,7 +225,7 @@ app.post('/api/:username/:postid',(req,res)=>{
         
 });
 
-app.put('/api/:username/:postid',(req,res)=>{
+app.put('/api/:username/:postid',auth,(req,res)=>{
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username || !req.body.title 
       || !req.body.body)
     {
@@ -213,7 +251,7 @@ app.put('/api/:username/:postid',(req,res)=>{
       
 });
 
-app.delete('/api/:username/:postid',(req,res)=>{
+app.delete('/api/:username/:postid',auth,(req,res)=>{
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username)
     {
       res.status(400);
@@ -244,24 +282,31 @@ app.get('/login?',(req,res)=>{
         return ;
       }
       retrievePassword(db,req.query.username,(docs)=>{
-           console.log(docs);
+           //console.log(docs);
            if(!docs || !docs.length)
            {
-             res.render('bad');
+             res.render('unregis');
              res.end();
              return;
            }
            
            bcrypt.compare(req.query.password,docs[0].password).then(match=>{
                  let redirect=req.query.redirect;
+                 //console.log(match);
                   if(!redirect)
                   {
                        redirect="/";
                   }
 
-                 if(match){
-                   res.redirect(redirect);
-                   //res.redirect("http://google.com");
+                 if(match)
+                 {
+                  let secret='C-UFRaksvPKhx1txJYFcut3QGxsafPmwCY6SCly3G6c';
+                  jwt.sign({'usr':req.query.username}, secret, { expiresIn: '2h' },(err,token)=>{
+                          //console.log(token);
+                          res.cookie('jwt',token);
+                          res.redirect(redirect);
+                  }); 
+                   
                  }
                  else{
                     res.render('login',{'re':redirect});
@@ -305,7 +350,7 @@ const findPosts = function(db,query,callback) {
    
    db.collection("Posts").find(query).project(projecter).sort([['postid',1]]).toArray((err,docs)=>{
       assert.equal(err,null);
-      console.log(docs);
+      //console.log(docs);
       callback(docs);
 
    });

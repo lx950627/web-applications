@@ -5,7 +5,14 @@
     <link rel='stylesheet' href='/stylesheets/style.css' />
   </head>
   <body>
-  	Welcome to <%= title %>
-
+  	<h2>Welcome to <%= title %></h2>
+    <h3>API instructions(Authorization is required)</h3>
+    <ul>
+      <li>GET    /api/:username</li>
+      <li>GET    /api/:username/:postid</li>
+      <li>POST    /api/:username/:postid</li>
+      <li>PUT    /api/:username/:postid</li>
+      <li>DELETE    /api/:username/:postid</li>
+    </ul>
   </body>
 </html>
