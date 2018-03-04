@@ -22,26 +22,38 @@ export class Post{
 export class BlogService {
   private posts:Post[];
   private maxid:number;
+  private username:string;
   subject=new Subject();
 
   constructor(private http: HttpClient,
               private route:Router) {
     //console.log("service constructor");
   	 this.posts=[];
-  	 this.fetchPosts();
+     this.username=this.gerUsername();
+     if(this.username)
+     {
+       this.fetchPosts();
+     }
+  	 
     }
+
+    gerUsername():string{
+      let token=document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+      if(token)
+      {
+       return decode(token).usr;
+      }
+      else
+      {
+        window.location.href="/login";
+        return null;
+      }
+     }
 
 
   fetchPosts():void{
      this.maxid=1;
-     let token=document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-     //console.log(token);
-     let username=null;
-     if(token)
-     {
-       username = decode(token).usr;
-     }
-     const url=`/api/${username}`;
+     const url=`/api/${this.username}`;
      //const url=`http://localhost:3000/api/cs144`;
      this.http.get<Post[]>(url).subscribe(posts=>
        {
@@ -56,7 +68,8 @@ export class BlogService {
         this.maxid++;
      },
      err=>{
-         window.location.href="http://localhost:3000/login";
+         console.log(err);
+         //window.location.href="http://localhost:3000/login";
        });
 
   }
@@ -74,13 +87,7 @@ export class BlogService {
   	 'created':new Date(),'modified':new Date()};
   	 this.posts.push(post);
      
-     let token=document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-     //console.log(token);
-     let username=null;
-     if(token){
-       username = decode(token).usr;
-     }
-     const url=`/api/${username}/${id}`;
+     const url=`/api/${this.username}/${id}`;
      //const url=`http://localhost:3000/api/cs144/${post.postid}`;
      
      //console.log(post.postid);
@@ -125,13 +132,7 @@ export class BlogService {
            post.modified=new Date();
            this.posts.splice(i,1,post);
 
-            let token=document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-          //console.log(token);
-             let username=null;
-           if(token){
-              username = decode(token).usr;
-            }
-            const url=`/api/${username}/${post.postid}`;
+           const url=`/api/${this.username}/${post.postid}`;
            //url="http://localhost:3000/api/cs144/"+post.postid;
            this.http.put(url,post,httpOptions).subscribe( 
            data  => {},
@@ -155,13 +156,7 @@ export class BlogService {
   	  	{
            this.posts.splice(i,1);
 
-           let token=document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-           //console.log(token);
-             let username=null;
-             if(token){
-              username = decode(token).usr;
-              }
-           const url=`/api/${username}/${postid}`;
+           const url=`/api/${this.username}/${postid}`;
            //const url=`http://localhost:3000/api/cs144/${postid}`;
            this.http.delete(url,httpOptions).subscribe( 
            data  => {},

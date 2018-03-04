@@ -47,10 +47,10 @@ export class EditComponent implements OnInit{
        this.route.navigate(['/']);
     }
     let postid=+id;
-    console.log(postid);
+    //console.log(postid);
 
   	this.post=this.blogService.getPost(postid);
-    console.log(this.post)
+    //console.log(this.post)
   }
 
   save(b:NgForm):void{

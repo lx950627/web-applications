@@ -1,10 +1,10 @@
 <div class="rightside" *ngIf="post">
 <h3>Title:</h3>
 <form #myForm="ngForm">
-<input [(ngModel)]="post.title" type="text" name="title">
+<input [(ngModel)]="post.title" type="text" name="title" placeholder="Please input the title here">
 <br>
 <h3>Body:</h3>
-<textarea class="form-control" [(ngModel)]="post.body" cols=50 rows=10 placeholder="Please input your post here." name="body">
+<textarea class="form-control" [(ngModel)]="post.body" cols=50 rows=10 placeholder="Please input your post here" name="body">
 </textarea>
 <div>
 Last Modified:{{post.modified | date:'MM-dd-yyyy HH:mm:ss a'}}

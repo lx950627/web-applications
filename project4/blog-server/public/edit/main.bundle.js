@@ -215,18 +215,25 @@ var BlogService = /** @class */ (function () {
         this.subject = new __WEBPACK_IMPORTED_MODULE_4_rxjs_Subject__["a" /* Subject */]();
         //console.log("service constructor");
         this.posts = [];
-        this.fetchPosts();
+        this.username = this.gerUsername();
+        if (this.username) {
+            this.fetchPosts();
+        }
     }
+    BlogService.prototype.gerUsername = function () {
+        var token = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+        if (token) {
+            return Object(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__["decode"])(token).usr;
+        }
+        else {
+            window.location.href = "/login";
+            return null;
+        }
+    };
     BlogService.prototype.fetchPosts = function () {
         var _this = this;
         this.maxid = 1;
-        var token = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-        //console.log(token);
-        var username = null;
-        if (token) {
-            username = Object(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__["decode"])(token).usr;
-        }
-        var url = "/api/" + username;
+        var url = "/api/" + this.username;
         //const url=`http://localhost:3000/api/cs144`;
         this.http.get(url).subscribe(function (posts) {
             //console.log(posts);
@@ -239,7 +246,8 @@ var BlogService = /** @class */ (function () {
             _this.subject.next();
             _this.maxid++;
         }, function (err) {
-            window.location.href = "http://localhost:3000/login";
+            console.log(err);
+            //window.location.href="http://localhost:3000/login";
         });
     };
     BlogService.prototype.getPosts = function () {
@@ -254,13 +262,7 @@ var BlogService = /** @class */ (function () {
         var post = { 'postid': id, 'body': "", 'title': "",
             'created': new Date(), 'modified': new Date() };
         this.posts.push(post);
-        var token = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-        //console.log(token);
-        var username = null;
-        if (token) {
-            username = Object(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__["decode"])(token).usr;
-        }
-        var url = "/api/" + username + "/" + id;
+        var url = "/api/" + this.username + "/" + id;
         //const url=`http://localhost:3000/api/cs144/${post.postid}`;
         //console.log(post.postid);
         this.http.post(url, post, httpOptions).subscribe(function (data) { }, function (error) {
@@ -288,13 +290,7 @@ var BlogService = /** @class */ (function () {
             if (this.posts[i].postid == post.postid) {
                 post.modified = new Date();
                 this.posts.splice(i, 1, post);
-                var token = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-                //console.log(token);
-                var username = null;
-                if (token) {
-                    username = Object(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__["decode"])(token).usr;
-                }
-                var url = "/api/" + username + "/" + post.postid;
+                var url = "/api/" + this.username + "/" + post.postid;
                 //url="http://localhost:3000/api/cs144/"+post.postid;
                 this.http.put(url, post, httpOptions).subscribe(function (data) { }, function (error) {
                     alert("There was an error updating the post at the server");
@@ -309,13 +305,7 @@ var BlogService = /** @class */ (function () {
         for (var i = 0; i < this.posts.length; i++) {
             if (this.posts[i].postid == postid) {
                 this.posts.splice(i, 1);
-                var token = document.cookie.replace(/(?:(?:^|.*;\s*)jwt\s*\=\s*([^;]*).*$)|^.*$/, "$1");
-                //console.log(token);
-                var username = null;
-                if (token) {
-                    username = Object(__WEBPACK_IMPORTED_MODULE_2_jsonwebtoken__["decode"])(token).usr;
-                }
-                var url = "/api/" + username + "/" + postid;
+                var url = "/api/" + this.username + "/" + postid;
                 //const url=`http://localhost:3000/api/cs144/${postid}`;
                 this.http.delete(url, httpOptions).subscribe(function (data) { }, function (error) {
                     alert("There was an error deleting the post at the server");
@@ -358,7 +348,7 @@ module.exports = module.exports.toString();
 /***/ "../../../../../src/app/edit/edit.component.html":
 /***/ (function(module, exports) {
 
-module.exports = "<div class=\"rightside\" *ngIf=\"post\">\n<h3>Title:</h3>\n<form #myForm=\"ngForm\">\n<input [(ngModel)]=\"post.title\" type=\"text\" name=\"title\">\n<br>\n<h3>Body:</h3>\n<textarea class=\"form-control\" [(ngModel)]=\"post.body\" cols=50 rows=10 placeholder=\"Please input your post here.\" name=\"body\">\n</textarea>\n<div>\nLast Modified:{{post.modified | date:'MM-dd-yyyy HH:mm:ss a'}}\n</div>\n<button type=\"button\" (click)=\"delete()\">Delete</button>\n<button type=\"button\" (click)=\"save(myForm)\" [disabled]=\"!myForm.dirty\" [class.disabled]=\"!myForm.dirty\">Save</button>\n<button type=\"button\" (click)=\"preview()\">Preview</button>\n</form>\n</div>\n\n\n\n\n\n"
+module.exports = "<div class=\"rightside\" *ngIf=\"post\">\n<h3>Title:</h3>\n<form #myForm=\"ngForm\">\n<input [(ngModel)]=\"post.title\" type=\"text\" name=\"title\" placeholder=\"Please input the title here\">\n<br>\n<h3>Body:</h3>\n<textarea class=\"form-control\" [(ngModel)]=\"post.body\" cols=50 rows=10 placeholder=\"Please input your post here\" name=\"body\">\n</textarea>\n<div>\nLast Modified:{{post.modified | date:'MM-dd-yyyy HH:mm:ss a'}}\n</div>\n<button type=\"button\" (click)=\"delete()\">Delete</button>\n<button type=\"button\" (click)=\"save(myForm)\" [disabled]=\"!myForm.dirty\" [class.disabled]=\"!myForm.dirty\">Save</button>\n<button type=\"button\" (click)=\"preview()\">Preview</button>\n</form>\n</div>\n\n\n\n\n\n"
 
 /***/ }),
 
@@ -416,9 +406,9 @@ var EditComponent = /** @class */ (function () {
             this.route.navigate(['/']);
         }
         var postid = +id;
-        console.log(postid);
+        //console.log(postid);
         this.post = this.blogService.getPost(postid);
-        console.log(this.post);
+        //console.log(this.post)
     };
     EditComponent.prototype.save = function (b) {
         b.form.markAsPristine();

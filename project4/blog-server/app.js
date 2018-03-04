@@ -1,8 +1,6 @@
 var express = require('express');
 var app = express();
 var path = require('path');
-
-
 var favicon = require('serve-favicon');
 var logger = require('morgan');
 var cookieParser = require('cookie-parser');
@@ -10,8 +8,8 @@ var bodyParser = require('body-parser');
 var commonmark =require('commonmark');
 var bcrypt = require('bcrypt');
 var jwt = require('jsonwebtoken');
+const assert=require('assert');
 // view engine setup
-
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
 // uncomment after placing your favicon in /public
@@ -21,65 +19,20 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-var routes=require('./routes/index');
-
-
+let routes=require('./routes/index');
+let dbService=require('./routes/dbService.js');
+let auth=require('./routes/auth.js');
 /*app.use(function(req, res, next) {
   res.header("Access-Control-Allow-Origin", "*");
   res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
   next();
 });*/
-
-const MongoClient=require('mongodb').MongoClient;
-const assert=require('assert');
-const url='mongodb://localhost:27017';
-const dbName='BlogServer';
-let db;
-MongoClient.connect(url,(err,client)=>{
-      assert.equal(null,err);
-      console.log("Connected successful to mongodb");
-       db=client.db(dbName);
-      //client.close();
-});
-
-function auth(req,res,next){
-    if(!req.cookies['jwt'])
-    {
-       console.log("no jwc");
-       res.status(401).redirect("/login");
-       res.end();
-       return;
-    }
-    if(!req.params.username){
-       //res.render('bad');
-       res.status(401).redirect("/login");;
-       res.end();
-       return;
-    }
-    let secret='C-UFRaksvPKhx1txJYFcut3QGxsafPmwCY6SCly3G6c';
-    jwt.verify(req.cookies['jwt'],secret,(err,decoded)=>{
-        if(err || decoded.usr!=req.params.username){
-          console.log(err);
-          //res.render('unauth');
-          //res.send("error");
-          //res.redirect('http://localhost:3000/login?');
-          res.status(401).redirect("/login");
-          res.end();
-        }
-        else{
-          //console.log(decoded);
-          next();
-        }
-        
-    })
-   
-}
-
+dbService.connectMongoDB();
+app.use("/",routes);
 app.use('/edit',auth,routes);
 
 app.get('/blog/:username/:postid',(req,res)=>{
-
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username)
     {
       res.render('bad');
@@ -89,7 +42,7 @@ app.get('/blog/:username/:postid',(req,res)=>{
 
     }
   let query={'username':req.params.username,'postid':+req.params.postid};
-  findPosts(db,query,(post)=>{
+  dbService.findPosts(query,(post)=>{
     if(!post || !post.length)
     {
       res.render('oneposterror',{'query':query});
@@ -108,16 +61,15 @@ app.get('/blog/:username/:postid',(req,res)=>{
       post.postid =req.params.postid;
       res.render('onepost',{'post':post});
   })
-
-
 });
 
-app.get('/blog/:username?',auth,(req,res)=>{ 
+app.get('/blog/:username?',(req,res)=>{ 
      let start=1;
      if(req.query && req.query.start)
      {
       start=req.query.start;
      }
+
      if(!req.params.username)
      {
       res.status(400);
@@ -125,9 +77,7 @@ app.get('/blog/:username?',auth,(req,res)=>{
       return;
      }
 
-     displayPosts(db,req.params.username,start,(hasNext,posts)=>{
-         console.log(hasNext);
-         //console.log(posts);
+     dbService.displayPosts(req.params.username,start,(hasNext,posts)=>{
          if(!posts || !posts.length){
             res.send("Sorry, no matched post is found, or the user does not have any posts.");
             res.end();
@@ -145,9 +95,7 @@ app.get('/blog/:username?',auth,(req,res)=>{
          let start=posts[posts.length-1].postid+1;
          res.render("allposts",{'posts':posts,'start':start,'next':hasNext});
          res.end();
-     })
-
-    
+     }) 
 });
 
 
@@ -160,11 +108,9 @@ app.get('/api/:username',auth,(req,res)=>{
   }
 
   let query={'username':username};
-  console.log(query);
-   findPosts(db,query,(docs)=>{
+  dbService.findPosts(query,(docs)=>{
        res.json(docs);
        res.status(200);
-       console.log("sent");
        res.end();
    })
 });
@@ -172,7 +118,6 @@ app.get('/api/:username',auth,(req,res)=>{
 app.get('/api/:username/:postid',auth,(req,res)=>{
   let username=req.params.username;
   let id=req.params.postid;
-  //let re=new RegExp()
   if(!id.match(/[0-9]+/) || !username)
   {
       res.render('bad');
@@ -182,7 +127,7 @@ app.get('/api/:username/:postid',auth,(req,res)=>{
   }
   
   let query={'username':username,'postid':+id};
-   findPosts(db,query,(docs)=>{
+   dbService.findPosts(query,(docs)=>{
       if(docs.length==0)
       {
         res.render('oneposterror',{'query':query});
@@ -197,7 +142,6 @@ app.get('/api/:username/:postid',auth,(req,res)=>{
        
    })
 });
-
 
 app.post('/api/:username/:postid',auth,(req,res)=>{
      
@@ -216,7 +160,7 @@ app.post('/api/:username/:postid',auth,(req,res)=>{
       newpost['created']=new Date().getTime();
       newpost['modified']=new Date().getTime();
 
-      createPost(db,newpost,(r)=>{
+      dbService.createPost(newpost,(r)=>{
            if(!r){
               console.log("Duplicate!");
               res.status(400);
@@ -248,7 +192,7 @@ app.put('/api/:username/:postid',auth,(req,res)=>{
       let body=req.body.body;
       let query={'username':username,'postid':id};
       let change={'title':title,'body':body,'modified':new Date().getTime()};
-      updatePost(db,query,change,(r)=>{
+      dbService.updatePost(query,change,(r)=>{
            if(r.modifiedCount==1){
             res.status(200);
            }
@@ -270,9 +214,8 @@ app.delete('/api/:username/:postid',auth,(req,res)=>{
       let username=req.params.username;
       let id=+req.params.postid;
       let query={'username':username,'postid':id};
-      deletePost(db,query,(r)=>{
+      dbService.deletePost(query,(r)=>{
           if(r.deletedCount==1){
-            console.log("Delete Succeeds!");
             res.status(204);
           }
           else{
@@ -290,8 +233,7 @@ app.get('/login?',(req,res)=>{
         res.end();
         return ;
       }
-      retrievePassword(db,req.query.username,(docs)=>{
-           //console.log(docs);
+      dbService.retrievePassword(req.query.username,(docs)=>{
            if(!docs || !docs.length)
            {
              res.render('unregis');
@@ -301,7 +243,6 @@ app.get('/login?',(req,res)=>{
            
            bcrypt.compare(req.query.password,docs[0].password).then(match=>{
                  let redirect=req.query.redirect;
-                 //console.log(match);
                   if(!redirect)
                   {
                        redirect="/edit";
@@ -311,10 +252,7 @@ app.get('/login?',(req,res)=>{
                  {
                   let secret='C-UFRaksvPKhx1txJYFcut3QGxsafPmwCY6SCly3G6c';
                   jwt.sign({'usr':req.query.username}, secret, { expiresIn: '2h' },(err,token)=>{
-                          //console.log(token);
                           res.cookie('jwt',token);
-                          console.log("redirect");
-                          console.log(redirect);
                           res.redirect(redirect);
                   }); 
                    
@@ -327,69 +265,6 @@ app.get('/login?',(req,res)=>{
            });
       });   
 });
-
-
-const createPost = function(db,post,callback){
-      db.collection("Posts").insertOne(post,(err,r)=>{
-           //console.log(err);
-           callback(r);
-      })
-}
-
-
-const updatePost = function(db,query,change,callback){
-      console.log(query);
-      db.collection("Posts").updateOne(query,{$set:change},(err,r)=>{
-           assert.equal(null,err);
-           callback(r);
-      })
-}
-
-const deletePost = function(db,query,callback){
-      console.log(query);
-      db.collection("Posts").deleteOne(query,(err,r)=>{
-           assert.equal(null,err);
-           callback(r);
-      })
-}
-
-
-const findPosts = function(db,query,callback) {
-  // Get the documents collection
-   //console.log(query);
-   let projecter={"postid":1,"title":1,"body":1,"created":1,"modified":1,"_id":0};
-   
-   db.collection("Posts").find(query).project(projecter).sort([['postid',1]]).toArray((err,docs)=>{
-      assert.equal(err,null);
-      //console.log(docs);
-      callback(docs);
-
-   });
-};
-
-const displayPosts = function(db,username,start,callback){
-     let query={"username":username,"postid":{$gte:+start}};
-     var cursor=db.collection("Posts").find(query).sort([['postid',1]]).limit(5);
-     var cursornext=db.collection("Posts").find(query).sort([['postid',1]]).skip(5);
-
-     cursornext.hasNext((err,p)=>{   
-        cursor.toArray((err,docs)=>{
-          assert.equal(err,null);
-          //console.log(docs);
-          callback(p,docs);
-     });
-        
-     });  
-};
-
-const retrievePassword =function(db,username,callback){
-     let query={'username':username};
-     let projecter={"password":1,"_id":0};
-     db.collection("Users").find(query).project(projecter).toArray((err,docs)=>{
-          assert.equal(err,null);
-          callback(docs);
-     })
-};
 
 app.use(function(req, res) {
     res.render("invalid");
@@ -413,7 +288,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 }); 
-
 
 
 module.exports = app;
