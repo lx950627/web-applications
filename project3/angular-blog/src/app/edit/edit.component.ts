@@ -5,6 +5,8 @@ import { ActivatedRoute } from '@angular/router';
 import { Router } from '@angular/router';
 import { Location } from '@angular/common';
 import { HostListener } from '@angular/core';
+import { ViewChild } from '@angular/core';
+
 @Component({
   selector: 'app-edit',
   templateUrl: './edit.component.html',
@@ -12,6 +14,8 @@ import { HostListener } from '@angular/core';
 })
 export class EditComponent implements OnInit{
   post:Post;
+  @ViewChild('myForm') myForm:NgForm;
+
   constructor(private blogService:BlogService,
   	          private activatedRoute: ActivatedRoute,
   	          private route:Router) { 
@@ -20,9 +24,15 @@ export class EditComponent implements OnInit{
   ngOnInit() {
   	this.activatedRoute.params.subscribe(() => 
   	  {
-  	  if(this.post) {this.blogService.updatePost(this.post);}
+  	  if(this.post && this.myForm.dirty){
+        this.blogService.updatePost(this.post);
+      }
   	  this.get();
   	  });
+
+    this.blogService.subject.subscribe(()=>{
+         this.get();
+    })
   }
 
   @HostListener('window:unload')
@@ -31,9 +41,16 @@ export class EditComponent implements OnInit{
    }
 
   get():void{
-  	const id = +this.activatedRoute.snapshot.paramMap.get('id');
-  	this.post=this.blogService.getPost(id);
-  	//console.log(this.post);
+  	let id = this.activatedRoute.snapshot.paramMap.get('id');
+    if (!id.match(/[0-9]+/))
+    {
+       this.route.navigate(['/']);
+    }
+    let postid=+id;
+    console.log(postid);
+
+  	this.post=this.blogService.getPost(postid);
+    console.log(this.post)
   }
 
   save(b:NgForm):void{
@@ -47,7 +64,9 @@ export class EditComponent implements OnInit{
   }
 
   preview():void{
-  	 if(this.post) {this.blogService.updatePost(this.post);}
+  	 if(this.post && this.myForm.dirty) {
+       this.blogService.updatePost(this.post);
+     }
   	 this.route.navigate(['/preview',this.post.postid]);
   }
 

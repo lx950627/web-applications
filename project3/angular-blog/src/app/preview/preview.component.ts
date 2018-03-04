@@ -20,6 +20,10 @@ export class PreviewComponent implements OnInit {
 
   ngOnInit() {
   	this.activatedRoute.params.subscribe(() => this.displayContent());
+
+    this.blogService.subject.subscribe(()=>{
+         this.displayContent();
+    })
   	}
   
 

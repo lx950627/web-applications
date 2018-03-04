@@ -22,7 +22,14 @@ app.use(bodyParser.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 var routes=require('./routes/index');
-app.use('/', routes);
+
+
+/*app.use(function(req, res, next) {
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,PATCH,OPTIONS');
+  res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+  next();
+});*/
 
 const MongoClient=require('mongodb').MongoClient;
 const assert=require('assert');
@@ -39,14 +46,14 @@ MongoClient.connect(url,(err,client)=>{
 function auth(req,res,next){
     if(!req.cookies['jwt'])
     {
-       res.render('unauth');
-       res.status(401);
+       console.log("no jwc");
+       res.status(401).redirect("/login");
        res.end();
        return;
     }
     if(!req.params.username){
-       res.render('bad');
-       res.status(400);
+       //res.render('bad');
+       res.status(401).redirect("/login");;
        res.end();
        return;
     }
@@ -54,12 +61,14 @@ function auth(req,res,next){
     jwt.verify(req.cookies['jwt'],secret,(err,decoded)=>{
         if(err || decoded.usr!=req.params.username){
           console.log(err);
-          res.render('unauth');
-          res.status(401);
+          //res.render('unauth');
+          //res.send("error");
+          //res.redirect('http://localhost:3000/login?');
+          res.status(401).redirect("/login");
           res.end();
         }
         else{
-          console.log(decoded);
+          //console.log(decoded);
           next();
         }
         
@@ -67,8 +76,7 @@ function auth(req,res,next){
    
 }
 
-//app.use(auth);
-
+app.use('/edit',auth,routes);
 
 app.get('/blog/:username/:postid',(req,res)=>{
 
@@ -104,7 +112,7 @@ app.get('/blog/:username/:postid',(req,res)=>{
 
 });
 
-app.get('/blog/:username?',(req,res)=>{ 
+app.get('/blog/:username?',auth,(req,res)=>{ 
      let start=1;
      if(req.query && req.query.start)
      {
@@ -156,6 +164,7 @@ app.get('/api/:username',auth,(req,res)=>{
    findPosts(db,query,(docs)=>{
        res.json(docs);
        res.status(200);
+       console.log("sent");
        res.end();
    })
 });
@@ -192,8 +201,8 @@ app.get('/api/:username/:postid',auth,(req,res)=>{
 
 app.post('/api/:username/:postid',auth,(req,res)=>{
      
-     if(!req.params.postid.match(/[0-9]+/) || !req.params.username || !req.body.title 
-      || !req.body.body)
+     if(!req.params.postid.match(/[0-9]+/) || !req.params.username || req.body.title==undefined 
+      || req.body.body==undefined)
     {
       res.status(400);
       res.end();
@@ -226,8 +235,8 @@ app.post('/api/:username/:postid',auth,(req,res)=>{
 });
 
 app.put('/api/:username/:postid',auth,(req,res)=>{
-  if(!req.params.postid.match(/[0-9]+/) || !req.params.username || !req.body.title 
-      || !req.body.body)
+  if(!req.params.postid.match(/[0-9]+/) || !req.params.username || req.body.title==undefined
+      || req.body.body==undefined)
     {
       res.status(400);
       res.end();
@@ -295,7 +304,7 @@ app.get('/login?',(req,res)=>{
                  //console.log(match);
                   if(!redirect)
                   {
-                       redirect="/";
+                       redirect="/edit";
                   }
 
                  if(match)
@@ -304,6 +313,8 @@ app.get('/login?',(req,res)=>{
                   jwt.sign({'usr':req.query.username}, secret, { expiresIn: '2h' },(err,token)=>{
                           //console.log(token);
                           res.cookie('jwt',token);
+                          console.log("redirect");
+                          console.log(redirect);
                           res.redirect(redirect);
                   }); 
                    
@@ -402,8 +413,6 @@ app.use(function(err, req, res, next) {
   res.status(err.status || 500);
   res.render('error');
 }); 
-
-
 
 
 

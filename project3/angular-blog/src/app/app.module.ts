@@ -8,6 +8,7 @@ import { AbstractControl } from '@angular/forms';
 import { ListComponent } from './list/list.component';
 import { AppRoutingModule } from './/app-routing.module';
 import { PreviewComponent } from './preview/preview.component';
+import { HttpClientModule }    from '@angular/common/http';
 
 @NgModule({
   declarations: [
@@ -19,7 +20,8 @@ import { PreviewComponent } from './preview/preview.component';
   imports: [
     BrowserModule,
     FormsModule,
-    AppRoutingModule
+    AppRoutingModule,
+    HttpClientModule
   ],
   providers: [BlogService],
   bootstrap: [AppComponent]
