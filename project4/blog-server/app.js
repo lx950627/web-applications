@@ -30,7 +30,7 @@ let auth=require('./routes/auth.js');
 });*/
 dbService.connectMongoDB();
 app.use("/",routes);
-app.use('/edit',auth,routes);
+app.use('/edit',auth.editauth,routes);
 
 app.get('/blog/:username/:postid',(req,res)=>{
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username)
@@ -99,7 +99,7 @@ app.get('/blog/:username?',(req,res)=>{
 });
 
 
-app.get('/api/:username',auth,(req,res)=>{
+app.get('/api/:username',auth.apiauth,(req,res)=>{
   let username=req.params.username;
   if(!username){
     res.render('bad');
@@ -115,7 +115,7 @@ app.get('/api/:username',auth,(req,res)=>{
    })
 });
 
-app.get('/api/:username/:postid',auth,(req,res)=>{
+app.get('/api/:username/:postid',auth.apiauth,(req,res)=>{
   let username=req.params.username;
   let id=req.params.postid;
   if(!id.match(/[0-9]+/) || !username)
@@ -143,7 +143,7 @@ app.get('/api/:username/:postid',auth,(req,res)=>{
    })
 });
 
-app.post('/api/:username/:postid',auth,(req,res)=>{
+app.post('/api/:username/:postid',auth.apiauth,(req,res)=>{
      
      if(!req.params.postid.match(/[0-9]+/) || !req.params.username || req.body.title==undefined 
       || req.body.body==undefined)
@@ -178,7 +178,7 @@ app.post('/api/:username/:postid',auth,(req,res)=>{
         
 });
 
-app.put('/api/:username/:postid',auth,(req,res)=>{
+app.put('/api/:username/:postid',auth.apiauth,(req,res)=>{
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username || req.body.title==undefined
       || req.body.body==undefined)
     {
@@ -204,7 +204,7 @@ app.put('/api/:username/:postid',auth,(req,res)=>{
       
 });
 
-app.delete('/api/:username/:postid',auth,(req,res)=>{
+app.delete('/api/:username/:postid',auth.apiauth,(req,res)=>{
   if(!req.params.postid.match(/[0-9]+/) || !req.params.username)
     {
       res.status(400);
