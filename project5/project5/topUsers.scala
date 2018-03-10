@@ -1,0 +1,11 @@
+val file = sc.textFile("twitter.edges") 
+val filesplit=file.map(line=>line.split(": "))
+val user_followed=filesplit.flatMap(arr=>{
+	val users=arr(1)
+	val followed=users.split(",")
+    followed.map(user=>(user,1))
+})
+val followedcount = user_followed.reduceByKey((a,b) => a+b)
+val result=followedcount.filter({case(a,b)=>b>1000})
+result.saveAsTextFile("output")
+System.exit(0)
