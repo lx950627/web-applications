@@ -33,8 +33,10 @@ module.exports.apiauth = function(req,res,next){
 
     let secret='C-UFRaksvPKhx1txJYFcut3QGxsafPmwCY6SCly3G6c';
     jwt.verify(req.cookies['jwt'],secret,(err,decoded)=>{
-        if(err || decoded.usr!=req.params.username){
+        if(err || decoded.usr!=req.params.username)
+        {
           console.log(err);
+          res.json({error:1});
           res.status(401);
           res.end();
         }

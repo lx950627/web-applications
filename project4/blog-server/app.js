@@ -102,7 +102,7 @@ app.get('/blog/:username?',(req,res)=>{
 app.get('/api/:username',auth.apiauth,(req,res)=>{
   let username=req.params.username;
   if(!username){
-    res.render('bad');
+    res.json({error:1});
     res.status(400);
     res.end();
   }
@@ -120,7 +120,8 @@ app.get('/api/:username/:postid',auth.apiauth,(req,res)=>{
   let id=req.params.postid;
   if(!id.match(/[0-9]+/) || !username)
   {
-      res.render('bad');
+      //res.render('bad');
+      res.json({error:1});
       res.status(400);
       res.end();
       return;
@@ -130,7 +131,8 @@ app.get('/api/:username/:postid',auth.apiauth,(req,res)=>{
    dbService.findPosts(query,(docs)=>{
       if(docs.length==0)
       {
-        res.render('oneposterror',{'query':query});
+        //res.render('oneposterror',{'query':query});
+        res.json({error:1});
         res.status(404);
       }
       else
